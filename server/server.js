@@ -2,11 +2,30 @@
 import express from 'express'
 import path from 'path'
 import cors from 'cors'
+import axios from 'axios'
 import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
-
 import cookieParser from 'cookie-parser'
+import fs from 'fs'
 import Html from '../client/html'
+
+const { readFile, writeFile, stat, unlink } = fs.promises
+
+const saveFile = async(users) => {
+  const fileContent = await writeFile(`${__dirname}/test.json`, JSON.stringify(users), { encoding: 'utf8' })
+      .then((data) => console.log(data))
+  return fileContent
+}
+
+const getFile = async() => {
+  const fileContent = await readFile(`${__dirname}/test.json`, { encoding: "utf8" })
+    .then(data => JSON.parse(data))
+    .catch(async() => {
+      const { data: users } = await axios('https://jsonplaceholder.typicode.com/users')
+      await saveFile(users)
+    })
+  return fileContent
+}
 
 let connections = []
 
@@ -21,6 +40,51 @@ server.use(bodyParser.json({ limit: '50mb', extended: true }))
 
 server.use(cookieParser())
 
+server.use((req, res, next) => {
+  res.set('x-skillcrucial-user', 'bf20e70d-e50c-4bf9-8092-69c044c07b08')
+  res.set('Access-Control-Expose-Headers', 'X-SKILLCRUCIAL-USER')
+  next()
+})
+
+server.get('/api/v1/users/', async (req, res) => { 
+  const users = await getFile()
+  res.json(users)
+}) 
+
+server.post('/api/v1/users/:name', async (req, res) => {
+  const users = await getFile()
+  const userId = users.length + 1
+  const newUser = { id: userId, name: req.params.name }
+  const newUsers = [...users, newUser]
+  saveFile(newUsers)
+  res.json({ status: 'success', id: userId })
+})
+
+server.delete('/api/v1/users/', async (req, res) => {
+  await stat(`${__dirname}/test.json`)
+  .then(async() => {
+  await unlink(`${__dirname}/test.json`) 
+  res.send('delete successfully')
+}) 
+.catch(() => res.send('File not found'))
+})
+
+server.patch('/api/v1/users/:userId', async(req, res) => {
+  const userId = parseInt(req.params.userId, 10)
+  const users = await getFile()
+  const newUser = { id: userId, ...req.body } // { id: userId, name: 'newName'...}
+  const filteredUsers = users.filter((user) => user.id !== userId)
+  saveFile([...filteredUsers, newUser])
+  res.json({ status: 'success', id: userId })
+})
+
+server.delete('/api/v1/users/:userId', async(req, res) => { // удаление пользователя
+  const userId = parseInt(req.params.userId, 10)
+  const users  = await getFile() // получили всех пользователей с файла                     
+  const filteredUsers = users.filter((user) => user.id !== userId) // удалить элемент массива
+  saveFile(filteredUsers)
+  res.json({ status: 'success', id: userId })
+}) 
 server.use('/api/', (req, res) => {
   res.status(404)
   res.end()
