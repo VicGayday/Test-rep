@@ -54,7 +54,7 @@ server.get('/api/v1/users/', async (req, res) => {
 server.post('/api/v1/users/:name', async (req, res) => {
   const users = await getFile()
   const userId = users.length + 1
-  const newUser = { id: userId, name: req.params.name }
+  const newUser = { id: userId, ...req.body }
   const newUsers = [...users, newUser]
   saveFile(newUsers)
   res.json({ status: 'success', id: userId })
