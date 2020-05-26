@@ -11,16 +11,17 @@ import Html from '../client/html'
 
 const { readFile, writeFile, stat, unlink } = fs.promises
 
-const saveFile = async(users) => {
-  const fileContent = await writeFile(`${__dirname}/test.json`, JSON.stringify(users), { encoding: 'utf8' })
-      .then((data) => console.log(data))
+const saveFile = async (users) => {
+  const fileContent = await writeFile(`${__dirname}/test.json`, JSON.stringify(users), {
+    encoding: 'utf8'
+  }).then((data) => data)
   return fileContent
 }
 
-const getFile = async() => {
-  const fileContent = await readFile(`${__dirname}/test.json`, { encoding: "utf8" })
-    .then(data => JSON.parse(data))
-    .catch(async() => {
+const getFile = async () => {
+  const fileContent = await readFile(`${__dirname}/test.json`, { encoding: 'utf8' })
+    .then((data) => JSON.parse(data))
+    .catch(async () => {
       const { data: users } = await axios('https://jsonplaceholder.typicode.com/users')
       await saveFile(users)
     })
@@ -46,10 +47,10 @@ server.use((req, res, next) => {
   next()
 })
 
-server.get('/api/v1/users/', async (req, res) => { 
+server.get('/api/v1/users/', async (req, res) => {
   const users = await getFile()
   res.json(users)
-}) 
+})
 
 server.post('/api/v1/users/:name', async (req, res) => {
   const users = await getFile()
@@ -62,14 +63,14 @@ server.post('/api/v1/users/:name', async (req, res) => {
 
 server.delete('/api/v1/users/', async (req, res) => {
   await stat(`${__dirname}/test.json`)
-  .then(async() => {
-  await unlink(`${__dirname}/test.json`) 
-  res.send('delete successfully')
-}) 
-.catch(() => res.send('File not found'))
+    .then(async () => {
+      await unlink(`${__dirname}/test.json`)
+      res.send('delete successfully')
+    })
+    .catch(() => res.send('File not found'))
 })
 
-server.patch('/api/v1/users/:userId', async(req, res) => {
+server.patch('/api/v1/users/:userId', async (req, res) => {
   const userId = parseInt(req.params.userId, 10)
   const users = await getFile()
   const newUser = { id: userId, ...req.body } // { id: userId, name: 'newName'...}
@@ -78,13 +79,14 @@ server.patch('/api/v1/users/:userId', async(req, res) => {
   res.json({ status: 'success', id: userId })
 })
 
-server.delete('/api/v1/users/:userId', async(req, res) => { // удаление пользователя
+server.delete('/api/v1/users/:userId', async (req, res) => {
+  // удаление пользователя
   const userId = parseInt(req.params.userId, 10)
-  const users  = await getFile() // получили всех пользователей с файла                     
+  const users = await getFile() // получили всех пользователей с файла
   const filteredUsers = users.filter((user) => user.id !== userId) // удалить элемент массива
   saveFile(filteredUsers)
   res.json({ status: 'success', id: userId })
-}) 
+})
 server.use('/api/', (req, res) => {
   res.status(404)
   res.end()
