@@ -5,8 +5,8 @@ import cors from 'cors'
 import axios from 'axios'
 import bodyParser from 'body-parser'
 import sockjs from 'sockjs'
-import cookieParser from 'cookie-parser'
 import fs from 'fs'
+import cookieParser from 'cookie-parser'
 import Html from '../client/html'
 
 const { readFile, writeFile, stat, unlink } = fs.promises
@@ -14,16 +14,16 @@ const { readFile, writeFile, stat, unlink } = fs.promises
 const saveFile = async (users) => {
   const fileContent = await writeFile(`${__dirname}/test.json`, JSON.stringify(users), {
     encoding: 'utf8'
-  }).then((data) => data)
+  })
   return fileContent
 }
-
 const getFile = async () => {
   const fileContent = await readFile(`${__dirname}/test.json`, { encoding: 'utf8' })
     .then((data) => JSON.parse(data))
     .catch(async () => {
       const { data: users } = await axios('https://jsonplaceholder.typicode.com/users')
       await saveFile(users)
+      return users
     })
   return fileContent
 }
@@ -47,43 +47,52 @@ server.use((req, res, next) => {
   next()
 })
 
-server.get('/api/v1/users/', async (req, res) => {
+server.get('/api/v1/users', async (req, res) => {
+  // чтение
   const users = await getFile()
   res.json(users)
 })
 
-server.post('/api/v1/users/:name', async (req, res) => {
-  const users = await getFile()
-  const userId = users.length + 1
-  const newUser = { id: userId, ...req.body }
-  const newUsers = [...users, newUser]
-  saveFile(newUsers)
-  res.json({ status: 'success', id: userId })
-})
-
-server.delete('/api/v1/users/', async (req, res) => {
-  await stat(`${__dirname}/test.json`)
-    .then(async () => {
-      await unlink(`${__dirname}/test.json`)
-      res.send('delete successfully')
-    })
-    .catch(() => res.send('File not found'))
+server.post('/api/v1/users/', async (req, res) => {
+  // добавить нового пользователя
+  const users = await getFile() // получили всех пользователей с файла
+  const lastUser = users[users.length - 1] // последний юзер
+  const userId = lastUser.id + 1 // id последнего + 1
+  const newUser = { id: userId, ...req.body } // новый пользователь,составленный из id и параметров запроса
+  const newUsers = [...users, newUser] // добавить элемент в массив с помощью спреда
+  saveFile(newUsers) // сохраняем нового пользователя
+  res.json({ status: 'success', id: userId }) // посылаем клиенту id нового пользователя
 })
 
 server.patch('/api/v1/users/:userId', async (req, res) => {
+  // изменить пользователя с userId
   const userId = parseInt(req.params.userId, 10)
   const users = await getFile()
-  const newUser = { id: userId, ...req.body } // { id: userId, name: 'newName'...}
-  const filteredUsers = users.filter((user) => user.id !== userId)
-  saveFile([...filteredUsers, newUser])
-  res.json({ status: 'success', id: userId })
+  const newUsers = users.map((item) => {
+    if (+item.id === userId) {
+      const newU = { ...item, ...req.body } // { id + параметры body }
+      return newU
+    }
+    return item
+  })
+  saveFile(newUsers) // сохраняем нового пользователя
+  res.json({ status: 'success', id: userId }) // изменен или добавлен, если его не было
 })
 
+server.delete('/api/v1/users', async (req, res) => {
+  // удаление файла
+  await stat(`${__dirname}/test.json`)
+    .then(async () => {
+      await unlink(`${__dirname}/test.json`)
+      res.send('delete successfuly')
+    })
+    .catch(() => res.send('file not found'))
+})
 server.delete('/api/v1/users/:userId', async (req, res) => {
   // удаление пользователя
   const userId = parseInt(req.params.userId, 10)
   const users = await getFile() // получили всех пользователей с файла
-  const filteredUsers = users.filter((user) => user.id !== userId) // удалить элемент массива
+  const filteredUsers = users.filter((user) => user.id !== userId) // все элементы массива, кроме userId
   saveFile(filteredUsers)
   res.json({ status: 'success', id: userId })
 })
