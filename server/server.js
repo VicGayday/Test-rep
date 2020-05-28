@@ -56,8 +56,7 @@ server.get('/api/v1/users', async (req, res) => {
 server.post('/api/v1/users/', async (req, res) => {
   // добавить нового пользователя
   const users = await getFile() // получили всех пользователей с файла
-  const lastUser = users[users.length - 1] // последний юзер
-  const userId = lastUser.id + 1 // id последнего + 1
+  const userId = users.length + 1 // length will return 10 in case there are 10 users, so the last one will be with id 10 the same as length of users array and a new user will have an id of 11, which is suitable and prevent storing duplicates in our “database”
   const newUser = { id: userId, ...req.body } // новый пользователь,составленный из id и параметров запроса
   const newUsers = [...users, newUser] // добавить элемент в массив с помощью спреда
   saveFile(newUsers) // сохраняем нового пользователя
