@@ -1,18 +1,34 @@
-import React, { useState } from 'react'
+import React from 'react'
+import { Switch, Route } from 'react-router-dom'
 import { connect } from 'react-redux'
 import { bindActionCreators } from 'redux'
+// import axios from 'axios'
 import Head from './head'
+// import Header from './header'
+import InputView from './input-view'
+import ListRepositories from './list-repositories'
+import ProjectView from './project-view'
 
 const Home = () => {
-  const [counter, setCounterNew] = useState(0)
+  // const { user } = useParams()
+  // const [repositoryList, setRepositoryList] = useState([])
+
+  // useEffect(() => {
+  //   if (typeof user !== 'undefined') {
+  //     axios(`https://api.github.com/users/${user}/repos`).then(({ data }) => {
+  //       setRepositoryList(data)
+  //     })
+  //   }
+  // }, [user])
 
   return (
     <div>
       <Head title="Hello" />
-      <button type="button" onClick={() => setCounterNew(counter + 1)}>
-        updateCounter
-      </button>
-      <div> Hello World Dashboard {counter} </div>
+      <Switch>
+        <Route exact path="/" component={() => <InputView />} />
+        <Route exact path="/:user" component={() => <ListRepositories />} />
+        <Route exact path="/:user/:project" component={() => <ProjectView />} />
+      </Switch>
     </div>
   )
 }

@@ -10,6 +10,9 @@ import store, { history } from '../redux'
 
 import Home from '../components/home'
 import DummyView from '../components/dummy-view'
+// import InputView from '../components/input-view'
+// import ListRepositories from '../components/list-repositories'
+// import ProjectView from '../components/project-view'
 import NotFound from '../components/404'
 
 import Startup from './startup'
@@ -82,8 +85,10 @@ export default (props) => {
       <ConnectedRouter history={history} location={props.location} context={props.context}>
         <StartupConnected>
           <Switch>
-            <Route exact path="/" component={() => <DummyView />} />
-            <Route exact path="/dashboard" component={() => <Home />} />
+            {/* <Route exact path="/" component={() => <InputView />} /> */}
+            {/* <Route exact path="/:user" component={() => <ListRepositories />} />
+            <Route exact path="/:user/:project" component={() => <ProjectView />} /> */}
+            <Route exact path="/*" component={() => <Home />} />
             <PrivateRouteConnected exact path="/hidden-route" component={() => <DummyView />} />
             <Route component={() => <NotFound />} />
           </Switch>
