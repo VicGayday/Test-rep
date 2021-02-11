@@ -8,7 +8,7 @@ const Header = () => {
   return (
     <div>
       <div className="flex items-center justify-between flex-wrap bg-indigo-800 p-6">
-        <div className="text-white font-bold shadow-lg">This is Header {user}</div>
+        <div className="text-white font-bold shadow-lg">{user}</div>
         <Link to="/" className="no-underline hover:underline text-white font-bold">
           Go to Root
         </Link>
